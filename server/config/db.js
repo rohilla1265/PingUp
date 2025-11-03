@@ -32,7 +32,7 @@ const connectDB = async () => {
     console.error("💥 MongoDB connection failed:", error.message);
     // In production, you might want to use a more sophisticated retry mechanism
     setTimeout(connectDB, 5000); // Retry after 5 seconds
-    }
+  }
 };
 
 export default connectDB;
