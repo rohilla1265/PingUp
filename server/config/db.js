@@ -8,9 +8,15 @@ const connectDB = async () => {
 
     const connectionOptions = {
       dbName: "PingUp",
-      maxPoolSize: 10, // Maximum number of sockets in the connection pool
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      // ADD THESE SSL/TLS OPTIONS:
+      ssl: true,
+      tls: true,
+      tlsAllowInvalidCertificates: false,
+      retryWrites: true,
+      w: 'majority'
     };
 
     mongoose.connection.on('connected', () => {
@@ -30,8 +36,14 @@ const connectDB = async () => {
     
   } catch (error) {
     console.error("💥 MongoDB connection failed:", error.message);
-    // In production, you might want to use a more sophisticated retry mechanism
-    setTimeout(connectDB, 5000); // Retry after 5 seconds
+    
+    // Don't retry immediately for SSL errors - it's likely a configuration issue
+    if (error.message.includes('SSL') || error.message.includes('TLS')) {
+      console.error("🔧 SSL/TLS configuration error. Check your connection string and options.");
+      process.exit(1); // Exit and fix the configuration
+    } else {
+      setTimeout(connectDB, 5000); // Retry after 5 seconds for other errors
+    }
   }
 };
 
