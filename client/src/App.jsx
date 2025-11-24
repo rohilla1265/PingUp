@@ -8,12 +8,18 @@ import Connection from '../pages/connection';
 import Profile from '../pages/profiles';
 import Feed from '../pages/feed';
 import Createpost from '../pages/createPost';
-import { useUser } from '@clerk/clerk-react';
+import { useUser,useAuth } from '@clerk/clerk-react';
 import Layout from '../pages/layout'; // Fixed import - removed { }
 import {Toaster} from "react-hot-toast";
+import { useEffect } from 'react';
 const App = () => {
   const { user } = useUser(); // Destructure user from useUser()
-  
+  const {getToken} = useAuth();
+  useEffect(()=>{
+    if(user){
+      getToken().then((token)=>console.log(token));
+    }
+  })
   return (
     <>
         <Toaster/>
