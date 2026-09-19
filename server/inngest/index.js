@@ -1,8 +1,10 @@
 import { Inngest } from 'inngest';
-import Connection from '../models/connection';
-import User from '../models/user'; // You need to import User model
-import { connect, connection } from 'mongoose';
-import nodemailer from 'nodemailer'; // Correct import for nodemailer
+import Connection from '../models/connection.js';
+import User from '../models/user.js';
+import mongoose from 'mongoose';
+import nodemailer from 'nodemailer';
+
+const { connect, connection } = mongoose;
 
 // Create Inngest client
 export const inngest = new Inngest({
@@ -10,18 +12,15 @@ export const inngest = new Inngest({
   name: "PingUp Application"
 });
 
-// Create function
+// Create user function
 const syncUserCreation = inngest.createFunction(
-  { id: "sync-user-from-clerk" },
-  { event: 'clerk/user.created' },
+  { id: "sync-user-from-clerk", event: 'clerk/user.created' },
   async ({ event }) => {
-    const { id, first_name, last_name, email_addresses, image_url } = event.data; // Fixed: email_addresses (not email_address)
+    const { id, first_name, last_name, email_addresses, image_url } = event.data;
     
-    // Get the first email address
     const email = email_addresses[0].email_address;
     let username = email.split('@')[0];
     
-    // Check if user exists and generate unique username if needed
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       username = username + Math.floor(Math.random() * 10000);
@@ -39,12 +38,11 @@ const syncUserCreation = inngest.createFunction(
   }
 );
 
-// Update function
+// Update user function
 const syncUserUpdation = inngest.createFunction(
-  { id: "update-user-from-clerk" },
-  { event: 'clerk/user.updated' },
+  { id: "update-user-from-clerk", event: 'clerk/user.updated' },
   async ({ event }) => {
-    const { id, first_name, last_name, email_addresses, image_url } = event.data; // Fixed: email_addresses
+    const { id, first_name, last_name, email_addresses, image_url } = event.data;
     
     const email = email_addresses[0].email_address;
     const updatedUserData = {
@@ -57,37 +55,35 @@ const syncUserUpdation = inngest.createFunction(
   }
 );
 
-// Deletion function
+// Delete user function
 const syncUserDeletion = inngest.createFunction(
-  { id: "delete-user-with-clerk" },
-  { event: 'clerk/user.deleted' },
+  { id: "delete-user-with-clerk", event: 'clerk/user.deleted' },
   async ({ event }) => {
     const { id } = event.data;
     await User.findByIdAndDelete(id);
   }
 );
 
-// Email configuration (you should configure this properly)
+// Email configuration
 const transporter = nodemailer.createTransport({
-  // Your email configuration here
-  service: 'gmail', // or other service
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   }
 });
 
+// Connection request reminder function
 const sendConnectionReminder = inngest.createFunction(
-  { id: "send-new-connection-request-reminder" },
-  { event: "app/connection-request" },
+  { id: "send-new-connection-request-reminder", event: "app/connection-request" },
   async ({ event, step }) => {
     const { connectionId } = event.data;
     
     // Step 1: Send initial connection request email
     await step.run('send-connection-request-mail', async () => {
-      const connection = await Connection.findById(connectionId).populate('from_user_id to_user_id');
+      const conn = await Connection.findById(connectionId).populate('from_user_id to_user_id');
       
-      if (!connection) {
+      if (!conn) {
         throw new Error(`Connection with ID ${connectionId} not found`);
       }
       
@@ -95,7 +91,7 @@ const sendConnectionReminder = inngest.createFunction(
       const html = `<h1>You have a new connection request</h1>`;
       
       await transporter.sendMail({
-        to: connection.to_user_id.email,
+        to: conn.to_user_id.email_address,
         subject,
         html
       });
@@ -107,13 +103,13 @@ const sendConnectionReminder = inngest.createFunction(
     
     // Step 3: Send reminder if not accepted
     await step.run("send-connection-request-reminder", async () => {
-      const connection = await Connection.findById(connectionId).populate('from_user_id to_user_id');
+      const conn = await Connection.findById(connectionId).populate('from_user_id to_user_id');
       
-      if (!connection) {
+      if (!conn) {
         return { message: "Connection not found" };
       }
       
-      if (connection.status === "accepted") {
+      if (conn.status === "accepted") {
         return { message: "Already accepted" };
       }
       
@@ -121,7 +117,7 @@ const sendConnectionReminder = inngest.createFunction(
       const html = `<h1>You still have a pending connection request</h1>`;
       
       await transporter.sendMail({
-        to: connection.to_user_id.email,
+        to: conn.to_user_id.email_address,
         subject,
         html
       });

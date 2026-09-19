@@ -6,7 +6,7 @@
 import express from "express";
 import multer from "multer";
 import { protect } from "../middleware/auth.js";
-import { getUserData, updateUserData, discoverUser, follower, unfollowUser, sendConnectionReques, acceptConnectionRequest, getConnectionRequest } from "../controllers/userController.js";
+import { getUserData, updateUserData, discoverUser, follower, unfollowUser, sendConnectionRequest, acceptConnectionRequest, getConnectionRequest } from "../controllers/userController.js";
 import User from "../models/user.js"; // ADD THIS LINE
 import mongoose from "mongoose";
 // import { registerUser } from "../controllers/userController.js";

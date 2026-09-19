@@ -1,6 +1,7 @@
 import User from "../models/user.js"
 import fs from 'fs'
-import mongoose, { connection } from "mongoose";
+import mongoose from "mongoose";
+const { connection } = mongoose;
 import imagekit from "../config/imageKit.js";
 import Connection from "../models/connection.js";
 
