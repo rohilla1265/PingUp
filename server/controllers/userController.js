@@ -302,3 +302,20 @@ export const acceptConnectionRequest = async (req, res) => {
         })
     }
 }
+export const getUserProfiles = async (req, res) => {
+    try {
+        const { profileId } = req.body;
+        const profile = await User.findById(profileId);
+        
+        if (!profile) {
+            return res.json({ success: false, message: "Profile not found" });
+        }
+
+        const posts = await Post.find({ user: profileId }).populate('user');
+
+        res.json({ success: true, profile, posts });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}

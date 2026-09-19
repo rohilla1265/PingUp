@@ -8,6 +8,7 @@ import multer from "multer";
 import { protect } from "../middleware/auth.js";
 import { getUserData, updateUserData, discoverUser, follower, unfollowUser, sendConnectionRequest, acceptConnectionRequest, getConnectionRequest } from "../controllers/userController.js";
 import User from "../models/user.js"; // ADD THIS LINE
+import {getUserProfiles} from "../controllers/userController.js"
 import mongoose from "mongoose";
 // import { registerUser } from "../controllers/userController.js";
 const userRouter = express.Router();
@@ -22,6 +23,7 @@ userRouter.post('/unfollow', protect, unfollowUser);
 userRouter.post('/connect', protect, sendConnectionRequest);
 userRouter.post('/accept', protect, acceptConnectionRequest);
 userRouter.get('/connection',protect,getConnectionRequest);
+userRouter.get('/profiles',protect,getUserProfiles);
 // In your userRouter.js - add this temporary route
 userRouter.get('/check-db', async (req, res) => {
     try {
